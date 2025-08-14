@@ -30,3 +30,14 @@ Each time `./omarchy-box` is run, the virtual machine will be reset to the base 
 
 If anything goes wrong, you can clean up with `./omarchy-box clean`, which will restore `omarchy-box` to its original state. This removes everything that was downloaded, including the base image.
 
+### Environment Variables
+You can customize the behavior of Omarchy Box using environment variables:
+- `OMARCHY_BOX_CPUS`: The number of CPU cores to allocate to the virtual machine. Defaults to 4.
+- `OMARCHY_BOX_RAM`: The amount of RAM to allocate to the virtual machine, in MB. Defaults to 4096.
+- `OMARCHY_BOX_SSH_PORT`: The port to use for SSH access to the virtual machine. Defaults to 2222.
+
+See [`omarchy-box`](./omarchy-box) for additional options.
+
+## License
+
+Omarchy Box is released under the [MIT License](https://opensource.org/licenses/MIT).
