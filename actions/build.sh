@@ -4,6 +4,7 @@ run_action overlay
 
 start_box
 
+echo -e "\033[1;31mThe base image is known to take a while to settle (±30s). Until we can find a way to make it faster, please be patient on this step.\033[0m"
 wait_for_ssh
 
 # Install pre-requisites
