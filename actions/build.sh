@@ -14,5 +14,8 @@ run_in_box "export TERM=vt100; wget -qO- https://omarchy.org/install | bash"
 
 BUILD_EC=$?
 
-# Exit with the remote build status so callers can act on it
-exit "${BUILD_EC}"
+# Exit on non-zero exit code
+if [[ ${BUILD_EC} -ne 0 ]]; then
+  echo "Omarchy installation failed with exit code ${BUILD_EC}" >&2
+  exit "${BUILD_EC}"
+fi
