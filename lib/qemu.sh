@@ -66,8 +66,6 @@ start_box() {
   echo "${QEMU_PID}" > "${PIDFILE}"
 
   trap 'shutdown_box $?' EXIT INT TERM
-
-  disown "${QEMU_PID}" || true
 }
 
 box_running() {

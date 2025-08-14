@@ -46,3 +46,9 @@ run_action() {
 
 # Run the specified action, defaulting to `build` if not provided.
 run_action "${1:-build}"
+
+# Keep running until the virtual machine is stopped, or the user interrupts.
+if box_running; then
+  echo "The box is left running until you press Ctrl+C to stop it."
+  wait "${QEMU_PID}"
+fi

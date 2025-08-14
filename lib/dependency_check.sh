@@ -2,6 +2,8 @@
 
 required_commands=(
   qemu-system-x86_64
+  scp
+  ssh
   sshpass
 )
 
