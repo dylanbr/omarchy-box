@@ -10,16 +10,30 @@ fi
 
 script_dir=$(dirname "$(realpath "$0")")
 
-OMARCHY_BOX_BASE_IMAGE="${OMARCHY_BOX_BASE_IMAGE:-Arch-Linux-x86_64-basic.qcow2}"
-OMARCHY_BOX_OVERLAY_IMAGE="${OMARCHY_BOX_OVERLAY_IMAGE:-omarchy-build.qcow2}"
 OMARCHY_BOX_BASE_DIR="${OMARCHY_BOX_BASE_DIR:-${script_dir}}"
 OMARCHY_BOX_DATA_DIR="${OMARCHY_BOX_DATA_DIR:-${OMARCHY_BOX_BASE_DIR}/data}"
+
+OMARCHY_BOX_BASE_IMAGE="${OMARCHY_BOX_BASE_IMAGE:-Arch-Linux-x86_64-basic.qcow2}"
+OMARCHY_BOX_OVERLAY_IMAGE="${OMARCHY_BOX_OVERLAY_IMAGE:-omarchy-build.qcow2}"
+
+OMARCHY_BOX_CPUS="${OMARCHY_BOX_CPUS:-4}"
+OMARCHY_BOX_RAM="${OMARCHY_BOX_RAM:-4096}"
+
+OMARCHY_BOX_SSH_PORT="${OMARCHY_BOX_SSH_PORT:-2222}"
+OMARCHY_BOX_SSH_USER="${OMARCHY_BOX_SSH_USER:-arch}"
+OMARCHY_BOX_SSH_PASS="${OMARCHY_BOX_SSH_PASS:-arch}"
+OMARCHY_BOX_SSH_HOST="${OMARCHY_BOX_SSH_HOST:-127.0.0.1}"
+OMARCHY_BOX_SSH_TIMEOUT_SECS="${OMARCHY_BOX_SSH_TIMEOUT_SECS:-300}"
 
 # Ensure the data directory exists.
 mkdir -p "${OMARCHY_BOX_DATA_DIR}"
 
 # Make the data directory the working directory.
 cd "${OMARCHY_BOX_DATA_DIR}"
+
+# Load library functions.
+source "${OMARCHY_BOX_BASE_DIR}/lib/qemu.sh"
+source "${OMARCHY_BOX_BASE_DIR}/lib/ssh.sh"
 
 run_action() {
   command="${OMARCHY_BOX_BASE_DIR}/actions/$1.sh"
@@ -33,4 +47,5 @@ run_action() {
   source "${command}"
 }
 
-run_action $1
+# Run the specified action, defaulting to `build` if not provided.
+run_action "${1:-build}"
