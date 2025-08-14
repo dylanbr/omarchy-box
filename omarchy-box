@@ -3,11 +3,6 @@
 # Exit on command errors, unset variables and pipeline failures.
 set -euo pipefail
 
-if ! command -v sshpass &>/dev/null; then
-  echo "Error: omarchy-box needs `sshpass` to function. You can install this using your package manager."
-  exit 1
-fi
-
 script_dir=$(dirname "$(realpath "$0")")
 
 OMARCHY_BOX_BASE_DIR="${OMARCHY_BOX_BASE_DIR:-${script_dir}}"
@@ -24,6 +19,8 @@ OMARCHY_BOX_SSH_USER="${OMARCHY_BOX_SSH_USER:-arch}"
 OMARCHY_BOX_SSH_PASS="${OMARCHY_BOX_SSH_PASS:-arch}"
 OMARCHY_BOX_SSH_HOST="${OMARCHY_BOX_SSH_HOST:-127.0.0.1}"
 OMARCHY_BOX_SSH_TIMEOUT_SECS="${OMARCHY_BOX_SSH_TIMEOUT_SECS:-300}"
+
+source "${OMARCHY_BOX_BASE_DIR}/lib/dependency_check.sh"
 
 # Ensure the data directory exists.
 mkdir -p "${OMARCHY_BOX_DATA_DIR}"
