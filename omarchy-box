@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+
+# Exit on command errors, unset variables and pipeline failures.
+set -euo pipefail
+
+if ! command -v sshpass &>/dev/null; then
+  echo "Error: omarchy-box needs `sshpass` to function. You can install this using your package manager."
+  exit 1
+fi
+
+script_dir=$(dirname "$(realpath "$0")")
+
+OMARCHY_BOX_BASE_IMAGE="${OMARCHY_BOX_BASE_IMAGE:-Arch-Linux-x86_64-basic.qcow2}"
+OMARCHY_BOX_OVERLAY_IMAGE="${OMARCHY_BOX_OVERLAY_IMAGE:-omarchy-build.qcow2}"
+OMARCHY_BOX_BASE_DIR="${OMARCHY_BOX_BASE_DIR:-${script_dir}}"
+OMARCHY_BOX_DATA_DIR="${OMARCHY_BOX_DATA_DIR:-${OMARCHY_BOX_BASE_DIR}/data}"
+
+# Ensure the data directory exists.
+mkdir -p "${OMARCHY_BOX_DATA_DIR}"
+
+# Make the data directory the working directory.
+cd "${OMARCHY_BOX_DATA_DIR}"
+
+run_action() {
+  command="${OMARCHY_BOX_BASE_DIR}/actions/$1.sh"
+
+  if [ ! -f "${command}" ]; then
+    echo "Unknown action: $1"
+    echo
+    command="${OMARCHY_BOX_BASE_DIR}/actions/usage.sh"
+  fi
+
+  source "${command}"
+}
+
+run_action $1
