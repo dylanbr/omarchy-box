@@ -11,7 +11,13 @@ wait_for_ssh
 run_in_box "sudo pacman -Sy --noconfirm wget base-devel"
 
 # Install Omarchy, setting the terminal to `vt100` to keep `python-terminaltexteffects` happy.
-run_in_box "export TERM=vt100; wget -qO- https://omarchy.org/install | bash"
+exports=(
+  OMARCHY_REPO="${OMARCHY_BOX_REPO}"
+  OMARCHY_REF="${OMARCHY_BOX_REF}"
+  TERM=vt100
+)
+
+run_in_box "export ${exports[@]}; wget -qO- https://omarchy.org/install | bash"
 
 BUILD_EC=$?
 

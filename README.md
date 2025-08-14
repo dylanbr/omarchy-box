@@ -35,6 +35,8 @@ You can customize the behavior of Omarchy Box using environment variables:
 - `OMARCHY_BOX_CPUS`: The number of CPU cores to allocate to the virtual machine. Defaults to 4.
 - `OMARCHY_BOX_RAM`: The amount of RAM to allocate to the virtual machine, in MB. Defaults to 4096.
 - `OMARCHY_BOX_SSH_PORT`: The port to use for SSH access to the virtual machine. Defaults to 2222.
+- `OMARCHY_BOX_REPO`: The GitHub repository to clone. Defaults to the default `OMARCHY_REPO` as set in Omarchy `boot.sh`.
+- `OMARCHY_BOX_REPO`: The branch or ref to check out. Defaults to the default `OMARCHY_REF` as set in Omarchy `boot.sh`.
 
 See [`omarchy-box`](./omarchy-box) for additional options.
 

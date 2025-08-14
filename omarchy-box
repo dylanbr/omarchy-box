@@ -20,6 +20,11 @@ OMARCHY_BOX_SSH_PASS="${OMARCHY_BOX_SSH_PASS:-arch}"
 OMARCHY_BOX_SSH_HOST="${OMARCHY_BOX_SSH_HOST:-127.0.0.1}"
 OMARCHY_BOX_SSH_TIMEOUT_SECS="${OMARCHY_BOX_SSH_TIMEOUT_SECS:-300}"
 
+# These do not have a default, because `boot.sh` in Omarchy provides them. They are defined here to document their existence. If set,
+# they will be passed onto the `boot.sh`.
+OMARCHY_BOX_REPO="${OMARCHY_BOX_REPO:-}"
+OMARCHY_BOX_REF="${OMARCHY_BOX_REF:-}"
+
 source "${OMARCHY_BOX_BASE_DIR}/lib/dependency_check.sh"
 
 # Ensure the data directory exists.
