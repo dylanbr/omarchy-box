@@ -16,6 +16,8 @@ A few dependencies are required. Be sure to install them before running `omarchy
 - `ssh`
 - `sshpass`
 
+On some hosts, like Ubuntu, `qemu` doesn't install any systems by default. In this case an additional package like `qemu-system-x86` is required for the `qemu-system-x86_64` command to be available. Other hosts, like macOS with `brew`, installing `qemu` is sufficient to get all `qemu` systems.
+
 ## Installation and Usage
 
 ```bash
