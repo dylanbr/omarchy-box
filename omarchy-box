@@ -24,6 +24,7 @@ OMARCHY_BOX_SSH_TIMEOUT_SECS="${OMARCHY_BOX_SSH_TIMEOUT_SECS:-300}"
 # they will be passed onto the `boot.sh`.
 OMARCHY_BOX_REPO="${OMARCHY_BOX_REPO:-}"
 OMARCHY_BOX_REF="${OMARCHY_BOX_REF:-}"
+OMARCHY_BOX_BARE="${OMARCHY_BOX_BARE:-}"
 
 source "${OMARCHY_BOX_BASE_DIR}/lib/dependency_check.sh"
 

@@ -15,6 +15,7 @@ run_in_box "sudo pacman -Sy --noconfirm wget base-devel"
 exports=(
   OMARCHY_REPO="${OMARCHY_BOX_REPO}"
   OMARCHY_REF="${OMARCHY_BOX_REF}"
+  OMARCHY_BARE="${OMARCHY_BOX_BARE}"
   TERM=vt100
 )
 

@@ -9,7 +9,7 @@ Build and run [Omarchy](https://omarchy.org/) in a virtual machine to test the b
 
 Omarchy Box is known to work on macOS and Linux. It has not been tested on Windows.
 
-Apple Silicon & ARM64 Linux hosts may be used, but the virtual machine will always be `x86_64`. Emulation mode will be used, which is significantly slower than the virtualization used on `x86_64` hosts.
+Apple Silicon & ARM64 Linux hosts are supported, but the guest is always `x86_64`. Emulation mode must therefore used, which is significantly slower than the virtualization used by `x86_64` hosts.
 
 A few dependencies are required. Be sure to install them before running `omarchy-box`:
 - `qemu` (specifically `qemu-system-x86_64`)
@@ -28,17 +28,17 @@ cd omarchy-box
 
 ## Usage
 
-### Omarchy Installation
+### Installing Omarchy / Build Testing
 
 ```bash
-./omarchy-box
+./omarchy-box build
 ```
 
 This will download the required base image, start a virtual machine, and install Omarchy. If the build is successful, the virtual machine will be left running for you to explore.
 
 Each time `./omarchy-box` is run, the virtual machine will be reset to the base image, and Omarchy will be reinstalled. This is especially useful when making changes to Omarchy in a fork and testing them out. Each time you push changes, re-run `./omarchy-box` with `OMARCHY_BOX_REPO` and `OMARCHY_BOX_REF` set to attempt a rebuild.
 
-If anything goes wrong, you can clean up with `./omarchy-box clean`, which will restore `omarchy-box` to its original state. This removes everything that was downloaded, including the base image.
+If anything goes wrong, you can clean up with `./omarchy-box clean`, which restores the original state. This removes everything in the `data` directory, including the base image and any built images, so be sure to back up anything you want to keep.
 
 ### Running Omarchy
 
@@ -60,6 +60,7 @@ You can customize the behavior of Omarchy Box using environment variables:
 - `OMARCHY_BOX_SSH_PORT`: The port to use for SSH access to the virtual machine. Defaults to 2222.
 - `OMARCHY_BOX_REPO`: The GitHub repository to clone. Defaults to the default `OMARCHY_REPO` as set in Omarchy `boot.sh`.
 - `OMARCHY_BOX_REF`: The branch or ref to check out. Defaults to the default `OMARCHY_REF` as set in Omarchy `boot.sh`.
+- `OMARCHY_BOX_BARE`: If set to `true`, only basic essential system tools will be installed, instead of the full Omarchy system.
 
 See [`omarchy-box`](./omarchy-box) for additional options.
 
