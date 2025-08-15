@@ -7,7 +7,7 @@ QEMU_CMD=(
   qemu-system-x86_64
   -smp ${OMARCHY_BOX_CPUS}
   -m ${OMARCHY_BOX_RAM}
-  -drive "if=virtio,file=${OMARCHY_BOX_OVERLAY_IMAGE},format=qcow2,cache=none"
+  -drive "if=virtio,file=${OMARCHY_BOX_IMAGE},format=qcow2,cache=none"
   -nic user,model=virtio-net-pci,hostfwd=tcp::${OMARCHY_BOX_SSH_PORT}-:22
   # Provide a random number generator to the VM, so it can generate SSH keys and other things that need randomness. This is important
   # for the first boot, as the VM will not have any entropy available

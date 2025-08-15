@@ -4,8 +4,8 @@
 run_action verify
 
 # Keep the previous overlay image, should one exist.
-if [ -f "${OMARCHY_BOX_OVERLAY_IMAGE}" ]; then
-  mv "${OMARCHY_BOX_OVERLAY_IMAGE}" "${OMARCHY_BOX_OVERLAY_IMAGE}.backup"
+if [ -f "${OMARCHY_BOX_IMAGE}" ]; then
+  mv "${OMARCHY_BOX_IMAGE}" "${OMARCHY_BOX_IMAGE}.backup"
 fi
 
-qemu-img create -f qcow2 -F qcow2 -b ${OMARCHY_BOX_BASE_IMAGE} ${OMARCHY_BOX_OVERLAY_IMAGE}
+qemu-img create -f qcow2 -F qcow2 -b ${OMARCHY_BOX_BASE_IMAGE} ${OMARCHY_BOX_IMAGE}
