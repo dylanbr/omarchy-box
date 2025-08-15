@@ -50,8 +50,8 @@ run_action() {
   source "${command}"
 }
 
-# Run the specified action, defaulting to `build` if not provided.
-run_action "${1:-build}"
+# Run the specified action, defaulting to `usage` if not provided.
+run_action "${1:-usage}"
 
 # Keep running until the virtual machine is stopped, or the user interrupts.
 if box_running; then
