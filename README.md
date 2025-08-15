@@ -30,6 +30,8 @@ Each time `./omarchy-box` is run, the virtual machine will be reset to the base 
 
 If anything goes wrong, you can clean up with `./omarchy-box clean`, which will restore `omarchy-box` to its original state. This removes everything that was downloaded, including the base image.
 
+The username and password are both `arch`.
+
 ### Environment Variables
 You can customize the behavior of Omarchy Box using environment variables:
 - `OMARCHY_BOX_CPUS`: The number of CPU cores to allocate to the virtual machine. Defaults to 4.
