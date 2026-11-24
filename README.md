@@ -68,6 +68,11 @@ Login defaults to user/password `omarchy` / `omarchy`. SSH uses a per-instance k
 | `--ephemeral` | Discard disk writes when the VM stops |
 | `--force` | Recreate an existing instance |
 | `--all` | Apply to every instance (`stop` / `status` / `clean`) |
+| `--display gui\|none` | GUI (default) or headless; raw QEMU `-display` values also work |
+
+GUI mode enables **zoom-to-fit** by default so the window is resizable and splash/desktop content scales into it: Cocoa on macOS (Intel and Apple Silicon), GTK on Linux when that backend is available (x86_64 and aarch64). Set `OMARCHY_BOX_ZOOM_TO_FIT=off` to turn it off. Guest GPU is still arch-specific (`virtio-vga` on x86_64, `virtio-gpu-pci` on aarch64).
+
+ISO first-boot installs can blank the display for a long time while the guest installs; SSH answering is the signal that it finished.
 
 Equivalent `OMARCHY_BOX_*` environment variables are also supported.
 

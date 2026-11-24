@@ -30,6 +30,46 @@ _set_accel_args() {
   esac
 }
 
+# True if the current QEMU binary lists a display backend name.
+_qemu_has_display() {
+  local name="$1"
+  "${OMARCHY_BOX_QEMU_BIN}" -display help 2>&1 | grep -qx "${name}"
+}
+
+# Sets QEMU_DISPLAY_ARGS for GUI mode.
+# macOS (Intel + Apple Silicon): Cocoa with zoom-to-fit so the window is
+# resizable and guest splash/desktop scales into it (helps Retina HiDPI).
+# Linux (x86_64 + aarch64): GTK zoom-to-fit when available; else SDL; else
+# leave QEMU's default. Guest GPU stays arch-specific (virtio-vga / virtio-gpu).
+_set_gui_display_args() {
+  QEMU_DISPLAY_ARGS=()
+  local zoom="${OMARCHY_BOX_ZOOM_TO_FIT:-on}"
+  local zoom_opt=""
+
+  case "${zoom}" in
+    on|true|1|yes) zoom_opt=",zoom-to-fit=on" ;;
+    off|false|0|no) zoom_opt="" ;;
+    *)
+      echo "WARNING: ignoring invalid OMARCHY_BOX_ZOOM_TO_FIT=${zoom} (use on|off)." >&2
+      zoom_opt=",zoom-to-fit=on"
+      ;;
+  esac
+
+  case "${OMARCHY_BOX_HOST_OS}" in
+    Darwin)
+      QEMU_DISPLAY_ARGS+=(-display "cocoa${zoom_opt}")
+      ;;
+    Linux)
+      if _qemu_has_display gtk; then
+        QEMU_DISPLAY_ARGS+=(-display "gtk${zoom_opt}")
+      elif _qemu_has_display sdl; then
+        # SDL has no zoom-to-fit; window still opens for local desktop use.
+        QEMU_DISPLAY_ARGS+=(-display sdl)
+      fi
+      ;;
+  esac
+}
+
 build_qemu_cmd() {
   local disk="$1"
   local firmware_vars="$2"
@@ -109,9 +149,21 @@ build_qemu_cmd() {
     cmd+=(-smbios "type=11,value=io.systemd.credential.binary:tmpfiles.extra=${smbios_b64}")
   fi
 
-  if [[ "${OMARCHY_BOX_DISPLAY:-gui}" == "none" ]]; then
-    cmd+=(-display none -serial mon:stdio)
-  fi
+  case "${OMARCHY_BOX_DISPLAY:-gui}" in
+    none)
+      cmd+=(-display none -serial mon:stdio)
+      ;;
+    gui)
+      _set_gui_display_args
+      if [[ ${#QEMU_DISPLAY_ARGS[@]} -gt 0 ]]; then
+        cmd+=("${QEMU_DISPLAY_ARGS[@]}")
+      fi
+      ;;
+    *)
+      # Allow a raw QEMU -display value, e.g. vnc=:1 or cocoa,full-screen=on.
+      cmd+=(-display "${OMARCHY_BOX_DISPLAY}")
+      ;;
+  esac
 
   printf '%s\0' "${cmd[@]}"
 }

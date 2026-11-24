@@ -27,7 +27,7 @@ Options:
   --keyboard LAYOUT     Keyboard layout (ISO installs; default: us)
   --timezone TZ         Timezone (ISO installs; default: UTC)
   --disk-size GB        Install disk size in GB (ISO installs; default: 40)
-  --display gui|none    Display mode (default: gui)
+  --display gui|none|…  Display mode (default: gui; or a raw QEMU -display value)
   --guest-arch ARCH     x86_64 or aarch64 (default: host arch)
   --ephemeral           Discard disk writes when the VM stops
   --force               Recreate the instance even if one already exists
@@ -46,6 +46,10 @@ Notes:
   - auto media: qcow2 on x86_64 when published for that version; otherwise ISO.
   - Official qcow2 is typically only available for the current stable latest.
   - Multiple instances can run together; SSH ports are allocated automatically.
+  - GUI zoom-to-fit is on by default (Cocoa on macOS; GTK on Linux when built-in).
+    Set OMARCHY_BOX_ZOOM_TO_FIT=off to disable. Resize via the window edges, or
+    View → Zoom To Fit / Full Screen in the QEMU menu on macOS.
+  - ISO installs can blank the display for long stretches while waiting for SSH.
 
 EOF
 
