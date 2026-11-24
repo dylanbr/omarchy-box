@@ -17,6 +17,7 @@ Omarchy Box supports **macOS and Linux**. Windows is not supported yet.
 
 Dependencies:
 - `qemu` (`qemu-system-x86_64` and/or `qemu-system-aarch64`, plus `qemu-img`)
+- Guest GPU + GUI UI (`virtio-vga` / `virtio-gpu-pci`, and GTK or SDL on Linux)
 - UEFI firmware (bundled with Homebrew `qemu`; on Linux install `ovmf` / `qemu-efi-aarch64`)
 - `curl`, `ssh`, `scp`
 
@@ -25,6 +26,12 @@ ISO installs only (aarch64 happy path, or `build` / `--media iso`):
 - a way to build cidata (`hdiutil` on macOS — already present; on Linux `dosfstools`+`mtools`, or `xorriso`/`genisoimage`)
 
 Optional: `sshpass` (password SSH fallback only; keys preferred)
+
+Install hints:
+- **Arch / Omarchy:** `sudo pacman -S qemu-desktop` (not `qemu-base` — that is headless and can crash when only part of the virtio GPU stack is installed)
+- **Debian/Ubuntu:** `sudo apt install qemu-system-x86 qemu-system-arm qemu-system-gui qemu-utils ovmf qemu-efi-aarch64`
+- **Fedora:** `sudo dnf install qemu-system-x86 qemu-system-aarch64 edk2-ovmf edk2-aarch64`
+- **macOS (Homebrew):** `brew install qemu`
 
 On some hosts, like Ubuntu, `qemu` doesn't install any systems by default. In that case an additional package like `qemu-system-x86` (and `qemu-system-arm` on aarch64 hosts) is required for the `qemu-system-*` commands to be available. Other hosts, like macOS with Homebrew, installing `qemu` is sufficient to get the system emulators and firmware.
 
