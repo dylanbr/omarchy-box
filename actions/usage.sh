@@ -28,6 +28,7 @@ Options:
   --timezone TZ         Timezone (ISO installs; default: UTC)
   --disk-size GB        Install disk size in GB (ISO installs; default: 40)
   --display gui|none|…  Display mode (default: gui; or a raw QEMU -display value)
+  --resolution WxH      Guest display size (default: 1920x1080)
   --guest-arch ARCH     x86_64 or aarch64 (default: host arch)
   --ephemeral           Discard disk writes when the VM stops
   --force               Recreate the instance even if one already exists
@@ -49,6 +50,9 @@ Notes:
   - GUI zoom-to-fit is on by default (Cocoa on macOS; GTK on Linux when built-in).
     Set OMARCHY_BOX_ZOOM_TO_FIT=off to disable. Resize via the window edges, or
     View → Zoom To Fit / Full Screen in the QEMU menu on macOS.
+  - Guest framebuffer defaults to 1920x1080 (override with --resolution). On Retina
+    Macs QEMU maps 1 guest pixel to 1 physical pixel, so the window is about half
+    the point size of the guest mode — raise --resolution or use Full Screen.
   - ISO installs can blank the display for long stretches while waiting for SSH.
 
 EOF

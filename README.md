@@ -69,8 +69,11 @@ Login defaults to user/password `omarchy` / `omarchy`. SSH uses a per-instance k
 | `--force` | Recreate an existing instance |
 | `--all` | Apply to every instance (`stop` / `status` / `clean`) |
 | `--display gui\|none` | GUI (default) or headless; raw QEMU `-display` values also work |
+| `--resolution WxH` | Guest framebuffer / EDID mode (default: `1920x1080`) |
 
 GUI mode enables **zoom-to-fit** by default so the window is resizable and splash/desktop content scales into it: Cocoa on macOS (Intel and Apple Silicon), GTK on Linux when that backend is available (x86_64 and aarch64). Set `OMARCHY_BOX_ZOOM_TO_FIT=off` to turn it off. Guest GPU is still arch-specific (`virtio-vga` on x86_64, `virtio-gpu-pci` on aarch64).
+
+On Retina Macs, QEMU 11 maps one guest pixel to one physical pixel, so a 1920×1080 guest is roughly a 960×540 point window. Use a larger `--resolution` (e.g. `2560x1440`), drag-resize with zoom-to-fit, or **View → Enter Full Screen**. Linux and non-Retina displays get a normal-sized 1920×1080 window.
 
 ISO first-boot installs can blank the display for a long time while the guest installs; SSH answering is the signal that it finished.
 

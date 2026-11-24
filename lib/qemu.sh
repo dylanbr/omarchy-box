@@ -117,10 +117,12 @@ build_qemu_cmd() {
   )
 
   # virtio-vga is x86-only; aarch64 QEMU exposes virtio-gpu-pci instead.
+  # xres/yres set the EDID preferred mode the guest should modeset to.
+  local gpu_opts="xres=${OMARCHY_BOX_XRES:-1920},yres=${OMARCHY_BOX_YRES:-1080}"
   if [[ "${OMARCHY_BOX_GUEST_ARCH}" == "x86_64" ]]; then
-    cmd+=(-device virtio-vga)
+    cmd+=(-device "virtio-vga,${gpu_opts}")
   else
-    cmd+=(-device virtio-gpu-pci)
+    cmd+=(-device "virtio-gpu-pci,${gpu_opts}")
   fi
 
   if [[ -n "${iso}" ]]; then

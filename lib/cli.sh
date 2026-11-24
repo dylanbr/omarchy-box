@@ -6,6 +6,16 @@
 OMARCHY_BOX_ACTION=""
 OMARCHY_BOX_FORCE="${OMARCHY_BOX_FORCE:-false}"
 
+_parse_resolution() {
+  local value="$1"
+  if [[ ! "${value}" =~ ^[0-9]+[xX][0-9]+$ ]]; then
+    echo "--resolution needs WIDTHxHEIGHT (e.g. 1920x1080)" >&2
+    exit 1
+  fi
+  OMARCHY_BOX_XRES="${value%[xX]*}"
+  OMARCHY_BOX_YRES="${value#*[xX]}"
+}
+
 omarchy_box_parse_args() {
   OMARCHY_BOX_ACTION=""
 
@@ -133,6 +143,14 @@ omarchy_box_parse_args() {
         ;;
       --display=*)
         OMARCHY_BOX_DISPLAY="${1#*=}"
+        shift
+        ;;
+      --resolution)
+        _parse_resolution "${2:-}"
+        shift 2
+        ;;
+      --resolution=*)
+        _parse_resolution "${1#*=}"
         shift
         ;;
       --guest-arch)
