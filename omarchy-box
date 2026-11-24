@@ -7,42 +7,46 @@ script_dir=$(dirname "$(realpath "$0")")
 
 OMARCHY_BOX_BASE_DIR="${OMARCHY_BOX_BASE_DIR:-${script_dir}}"
 OMARCHY_BOX_DATA_DIR="${OMARCHY_BOX_DATA_DIR:-${OMARCHY_BOX_BASE_DIR}/data}"
+OMARCHY_BOX_INSTANCE="${OMARCHY_BOX_INSTANCE:-default}"
+OMARCHY_BOX_INSTANCE_DIR="${OMARCHY_BOX_INSTANCE_DIR:-${OMARCHY_BOX_DATA_DIR}/instances/${OMARCHY_BOX_INSTANCE}}"
 
-OMARCHY_BOX_BASE_IMAGE="${OMARCHY_BOX_BASE_IMAGE:-Arch-Linux-x86_64-basic.qcow2}"
-OMARCHY_BOX_IMAGE="${OMARCHY_BOX_IMAGE:-omarchy-build.qcow2}"
+# Disk used to boot the instance (overlay or installed disk). Set by actions.
+OMARCHY_BOX_IMAGE="${OMARCHY_BOX_IMAGE:-${OMARCHY_BOX_INSTANCE_DIR}/disk.qcow2}"
 
 OMARCHY_BOX_CPUS="${OMARCHY_BOX_CPUS:-4}"
-OMARCHY_BOX_RAM="${OMARCHY_BOX_RAM:-4096}"
+OMARCHY_BOX_RAM="${OMARCHY_BOX_RAM:-8192}"
 
 OMARCHY_BOX_SSH_PORT="${OMARCHY_BOX_SSH_PORT:-2222}"
-OMARCHY_BOX_SSH_USER="${OMARCHY_BOX_SSH_USER:-arch}"
-OMARCHY_BOX_SSH_PASS="${OMARCHY_BOX_SSH_PASS:-arch}"
+OMARCHY_BOX_SSH_USER="${OMARCHY_BOX_SSH_USER:-omarchy}"
+OMARCHY_BOX_SSH_PASS="${OMARCHY_BOX_SSH_PASS:-omarchy}"
 OMARCHY_BOX_SSH_HOST="${OMARCHY_BOX_SSH_HOST:-127.0.0.1}"
+OMARCHY_BOX_SSH_KEY="${OMARCHY_BOX_SSH_KEY:-}"
 OMARCHY_BOX_SSH_TIMEOUT_SECS="${OMARCHY_BOX_SSH_TIMEOUT_SECS:-300}"
 
-# These do not have a default, because `boot.sh` in Omarchy provides them. They are defined here to document their existence. If set,
-# they will be passed onto the `boot.sh`.
-OMARCHY_BOX_REPO="${OMARCHY_BOX_REPO:-}"
-OMARCHY_BOX_REF="${OMARCHY_BOX_REF:-}"
-OMARCHY_BOX_BARE="${OMARCHY_BOX_BARE:-}"
+# gui | none
+OMARCHY_BOX_DISPLAY="${OMARCHY_BOX_DISPLAY:-gui}"
 
+# Omarchy 4.0+ only.
+OMARCHY_BOX_VERSION="${OMARCHY_BOX_VERSION:-latest}"
+
+# auto | qcow | iso
+OMARCHY_BOX_MEDIA="${OMARCHY_BOX_MEDIA:-auto}"
+
+source "${OMARCHY_BOX_BASE_DIR}/lib/arch.sh"
 source "${OMARCHY_BOX_BASE_DIR}/lib/dependency_check.sh"
+source "${OMARCHY_BOX_BASE_DIR}/lib/firmware.sh"
+source "${OMARCHY_BOX_BASE_DIR}/lib/ssh.sh"
+source "${OMARCHY_BOX_BASE_DIR}/lib/qemu.sh"
 
-# Ensure the data directory exists.
-mkdir -p "${OMARCHY_BOX_DATA_DIR}"
-
-# Make the data directory the working directory.
+mkdir -p "${OMARCHY_BOX_DATA_DIR}" "${OMARCHY_BOX_INSTANCE_DIR}"
 cd "${OMARCHY_BOX_DATA_DIR}"
 
-# Load library functions.
-source "${OMARCHY_BOX_BASE_DIR}/lib/qemu.sh"
-source "${OMARCHY_BOX_BASE_DIR}/lib/ssh.sh"
-
 run_action() {
-  command="${OMARCHY_BOX_BASE_DIR}/actions/$1.sh"
+  local action="$1"
+  local command="${OMARCHY_BOX_BASE_DIR}/actions/${action}.sh"
 
-  if [ ! -f "${command}" ]; then
-    echo "Unknown action: $1"
+  if [[ ! -f "${command}" ]]; then
+    echo "Unknown action: ${action}"
     echo
     command="${OMARCHY_BOX_BASE_DIR}/actions/usage.sh"
   fi
@@ -50,10 +54,8 @@ run_action() {
   source "${command}"
 }
 
-# Run the specified action, defaulting to `usage` if not provided.
 run_action "${1:-usage}"
 
-# Keep running until the virtual machine is stopped, or the user interrupts.
 if box_running; then
   echo "The box is left running until you press Ctrl+C to stop it."
   wait "${QEMU_PID}"

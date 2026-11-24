@@ -1,17 +1,40 @@
 #!/usr/bin/env bash
 
 cat <<EOF
-Usage: $0 <command> [options]
+Usage: $0 <command>
 
 Primary Commands:
-  build      Build the Omarchy image by running the installer
-  start      Start the last built Omarchy image
+  start      Start an Omarchy desktop VM
+  build      Install Omarchy from an ISO into a disk
+  download   Download Omarchy media
 
 Other Commands:
-  download   Download and verify the base Arch Linux image
-  clean      Erase all data and start fresh
+  clean      Erase instance/data and start fresh
   help       Show this message
+
+Environment (common):
+  OMARCHY_BOX_CPUS          vCPUs (default: 4)
+  OMARCHY_BOX_RAM           RAM in MB (default: 8192)
+  OMARCHY_BOX_SSH_PORT      Host SSH port (default: 2222)
+  OMARCHY_BOX_INSTANCE      Instance name (default: default)
+  OMARCHY_BOX_GUEST_ARCH    x86_64 | aarch64 (default: host arch)
+  OMARCHY_BOX_VERSION       latest | 4.x.y
+  OMARCHY_BOX_MEDIA         auto | qcow | iso
+  OMARCHY_BOX_DISPLAY       gui | none (default: gui)
+  OMARCHY_BOX_SSH_KEY       Private key for guest SSH (preferred)
+  OMARCHY_BOX_ALLOW_EMULATION=true
+                            Allow slow cross-arch TCG (not recommended)
+
+Notes:
+  - Omarchy 4.0+ only (no online installer, no bare mode).
+  - Happy path prefers official qcow2 on x86_64; aarch64 uses ISO install.
+  - macOS and Linux hosts are supported.
+  - start, build, and download are temporarily unavailable during the rewrite.
 
 EOF
 
-exit 1
+# usage is shown for missing/unknown commands → non-zero.
+# help.sh sources this then exits 0.
+if [[ "${OMARCHY_BOX_USAGE_OK:-}" != "true" ]]; then
+  exit 1
+fi
