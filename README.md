@@ -18,9 +18,13 @@ Cross-arch emulation is opt-in and slow (`OMARCHY_BOX_ALLOW_EMULATION=true`).
 Dependencies:
 - `qemu` (`qemu-system-x86_64` and/or `qemu-system-aarch64`, plus `qemu-img`)
 - UEFI firmware (bundled with Homebrew `qemu`; on Linux install `ovmf` / `qemu-efi-aarch64`)
-- `curl`, `ssh`, `scp`, `python3`, `openssl`
-- For ISO installs: a way to build cidata (`hdiutil` on macOS, or `dosfstools`+`mtools`, or `xorriso`/`genisoimage`)
-- Optional: `sshpass` (password SSH fallback only; keys preferred)
+- `curl`, `ssh`, `scp`
+
+ISO installs only (aarch64 happy path, or `build` / `OMARCHY_BOX_MEDIA=iso`):
+- `openssl` (to hash the user password)
+- a way to build cidata (`hdiutil` on macOS — already present; on Linux `dosfstools`+`mtools`, or `xorriso`/`genisoimage`)
+
+Optional: `sshpass` (password SSH fallback only; keys preferred)
 
 On some hosts, like Ubuntu, `qemu` doesn't install any systems by default. In that case an additional package like `qemu-system-x86` (and `qemu-system-arm` on aarch64 hosts) is required for the `qemu-system-*` commands to be available. Other hosts, like macOS with Homebrew, installing `qemu` is sufficient to get the system emulators and firmware.
 

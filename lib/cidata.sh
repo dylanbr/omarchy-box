@@ -9,13 +9,20 @@ OMARCHY_BOX_TIMEZONE="${OMARCHY_BOX_TIMEZONE:-UTC}"
 
 ensure_cidata_dependencies() {
   if ! command -v openssl >/dev/null 2>&1; then
-    echo "openssl is required to build install credentials." >&2
+    echo "openssl is required for ISO installs (to hash the user password)." >&2
     exit 1
   fi
-  if ! command -v python3 >/dev/null 2>&1; then
-    echo "python3 is required to build install configuration." >&2
-    exit 1
-  fi
+}
+
+# Escape a string for inclusion in a JSON double-quoted value.
+omarchy_box_json_escape() {
+  local s=$1
+  s=${s//\\/\\\\}
+  s=${s//\"/\\\"}
+  s=${s//$'\n'/\\n}
+  s=${s//$'\r'/\\r}
+  s=${s//$'\t'/\\t}
+  printf '%s' "${s}"
 }
 
 _package_cidata_dir() {
@@ -73,6 +80,7 @@ build_cidata_image() {
   local out_img="${1}"
   local ssh_pub="${2}"
   local work dir hash efi_binary mirror_url
+  local user_json hostname_json kb_json tz_json efi_json mirror_json ssh_line
 
   ensure_cidata_dependencies
 
@@ -101,60 +109,50 @@ build_cidata_image() {
   local main_start=$((boot_size + boot_start))
   local main_size=$((disk_bytes - main_start - mib))
 
-  python3 - "${dir}" \
-    "${OMARCHY_BOX_SSH_USER}" "${hash}" "${OMARCHY_BOX_HOSTNAME}" \
-    "${OMARCHY_BOX_KB_LAYOUT}" "${OMARCHY_BOX_TIMEZONE}" \
-    "${efi_binary}" "${mirror_url}" \
-    "${boot_start}" "${boot_size}" "${main_start}" "${main_size}" \
-    "${ssh_pub}" <<'PY'
-import json, pathlib, sys
+  user_json="$(omarchy_box_json_escape "${OMARCHY_BOX_SSH_USER}")"
+  hostname_json="$(omarchy_box_json_escape "${OMARCHY_BOX_HOSTNAME}")"
+  kb_json="$(omarchy_box_json_escape "${OMARCHY_BOX_KB_LAYOUT}")"
+  tz_json="$(omarchy_box_json_escape "${OMARCHY_BOX_TIMEZONE}")"
+  efi_json="$(omarchy_box_json_escape "${efi_binary}")"
+  mirror_json="$(omarchy_box_json_escape "${mirror_url}")"
+  # Password hashes are safe ASCII; still escape for JSON.
+  local hash_json
+  hash_json="$(omarchy_box_json_escape "${hash}")"
+  ssh_line="$(tr -d '\r\n' < "${ssh_pub}")"
 
-(
-    out_dir,
-    user,
-    password_hash,
-    hostname,
-    kb_layout,
-    timezone,
-    efi_binary,
-    mirror_url,
-    boot_start,
-    boot_size,
-    main_start,
-    main_size,
-    ssh_pub,
-) = sys.argv[1:]
-
-out = pathlib.Path(out_dir)
-credentials = {
-    "root_enc_password": password_hash,
+  cat >"${dir}/user_credentials.json" <<EOF
+{
+    "root_enc_password": "${hash_json}",
     "users": [
         {
-            "enc_password": password_hash,
+            "enc_password": "${hash_json}",
             "groups": [],
-            "sudo": True,
-            "username": user,
+            "sudo": true,
+            "username": "${user_json}"
         }
-    ],
+    ]
 }
-config = {
-    "app_config": None,
+EOF
+
+  cat >"${dir}/user_configuration.json" <<EOF
+{
+    "app_config": null,
     "archinstall-language": "English",
     "auth_config": {},
-    "audio_config": {"audio": "pipewire"},
-    "bootloader_config": {"bootloader": "Limine", "uki": False, "removable": False},
+    "audio_config": { "audio": "pipewire" },
+    "bootloader_config": { "bootloader": "Limine", "uki": false, "removable": false },
     "custom_commands": [],
     "omarchy_install": {
         "mode": "full_disk",
-        "defer_provisioning": False,
+        "defer_provisioning": false,
         "target_mount": "/mnt",
         "boot": {
             "esp_mount": "/boot",
             "esp_path": "/EFI/limine",
-            "efi_binary": efi_binary,
-            "enable_fallback": True,
+            "efi_binary": "${efi_json}",
+            "enable_fallback": true
         },
-        "storage": {"kernel": "linux-omarchy"},
+        "storage": { "kernel": "linux-omarchy" }
     },
     "disk_config": {
         "config_type": "default_layout",
@@ -164,98 +162,74 @@ config = {
                 "partitions": [
                     {
                         "btrfs": [],
-                        "dev_path": None,
-                        "flags": ["boot", "esp"],
+                        "dev_path": null,
+                        "flags": [ "boot", "esp" ],
                         "fs_type": "fat32",
                         "mount_options": [],
                         "mountpoint": "/boot",
                         "obj_id": "ea21d3f2-82bb-49cc-ab5d-6f81ae94e18d",
-                        "size": {
-                            "sector_size": {"unit": "B", "value": 512},
-                            "unit": "B",
-                            "value": int(boot_size),
-                        },
-                        "start": {
-                            "sector_size": {"unit": "B", "value": 512},
-                            "unit": "B",
-                            "value": int(boot_start),
-                        },
+                        "size": { "sector_size": { "unit": "B", "value": 512 }, "unit": "B", "value": ${boot_size} },
+                        "start": { "sector_size": { "unit": "B", "value": 512 }, "unit": "B", "value": ${boot_start} },
                         "status": "create",
-                        "type": "primary",
+                        "type": "primary"
                     },
                     {
                         "btrfs": [
-                            {"mountpoint": "/", "name": "@"},
-                            {"mountpoint": "/home", "name": "@home"},
-                            {"mountpoint": "/var/log", "name": "@log"},
-                            {"mountpoint": "/var/cache/pacman/pkg", "name": "@pkg"},
+                            { "mountpoint": "/", "name": "@" },
+                            { "mountpoint": "/home", "name": "@home" },
+                            { "mountpoint": "/var/log", "name": "@log" },
+                            { "mountpoint": "/var/cache/pacman/pkg", "name": "@pkg" }
                         ],
-                        "dev_path": None,
+                        "dev_path": null,
                         "flags": [],
                         "fs_type": "btrfs",
-                        "mount_options": ["compress=zstd"],
-                        "mountpoint": None,
+                        "mount_options": [ "compress=zstd" ],
+                        "mountpoint": null,
                         "obj_id": "8c2c2b92-1070-455d-b76a-56263bab24aa",
-                        "size": {
-                            "sector_size": {"unit": "B", "value": 512},
-                            "unit": "B",
-                            "value": int(main_size),
-                        },
-                        "start": {
-                            "sector_size": {"unit": "B", "value": 512},
-                            "unit": "B",
-                            "value": int(main_start),
-                        },
+                        "size": { "sector_size": { "unit": "B", "value": 512 }, "unit": "B", "value": ${main_size} },
+                        "start": { "sector_size": { "unit": "B", "value": 512 }, "unit": "B", "value": ${main_start} },
                         "status": "create",
-                        "type": "primary",
-                    },
+                        "type": "primary"
+                    }
                 ],
-                "wipe": True,
+                "wipe": true
             }
-        ],
+        ]
     },
-    "hostname": hostname,
-    "kernels": ["linux-omarchy"],
-    "network_config": {"type": "iso"},
-    "ntp": True,
+    "hostname": "${hostname_json}",
+    "kernels": [ "linux-omarchy" ],
+    "network_config": { "type": "iso" },
+    "ntp": true,
     "parallel_downloads": 8,
-    "script": None,
+    "script": null,
     "services": [],
-    "swap": True,
-    "timezone": timezone,
-    "locale_config": {
-        "kb_layout": kb_layout,
-        "sys_enc": "UTF-8",
-        "sys_lang": "en_US.UTF-8",
-    },
+    "swap": true,
+    "timezone": "${tz_json}",
+    "locale_config": { "kb_layout": "${kb_json}", "sys_enc": "UTF-8", "sys_lang": "en_US.UTF-8" },
     "mirror_config": {
         "custom_repositories": [],
-        "custom_servers": [{"url": mirror_url}],
+        "custom_servers": [
+            {"url": "${mirror_json}"}
+        ],
         "mirror_regions": {},
-        "optional_repositories": [],
+        "optional_repositories": []
     },
     "packages": [
         "base-devel",
         "git",
         "omarchy-keyring",
         "omarchy-settings",
-        "omarchy",
+        "omarchy"
     ],
-    "profile_config": {"gfx_driver": None, "greeter": None, "profile": {}},
-    "version": "3.0.9",
+    "profile_config": { "gfx_driver": null, "greeter": null, "profile": {} },
+    "version": "3.0.9"
 }
+EOF
 
-(out / "user_credentials.json").write_text(json.dumps(credentials, indent=4) + "\n")
-(out / "user_configuration.json").write_text(json.dumps(config, indent=4) + "\n")
-(out / "user_encrypt_installation.txt").write_text("false\n")
-(out / "authorized_keys").write_text(pathlib.Path(ssh_pub).read_text())
-(out / "meta-data").write_text("instance-id: omarchy-box\n")
-(out / "user-data").write_text(
-    "#cloud-config\nusers: []\ndisable_root: false\nssh_authorized_keys:\n  - "
-    + pathlib.Path(ssh_pub).read_text().strip()
-    + "\n"
-)
-PY
+  printf 'false\n' >"${dir}/user_encrypt_installation.txt"
+  cp "${ssh_pub}" "${dir}/authorized_keys"
+  printf 'instance-id: omarchy-box\n' >"${dir}/meta-data"
+  printf '#cloud-config\nusers: []\ndisable_root: false\nssh_authorized_keys:\n  - %s\n' "${ssh_line}" >"${dir}/user-data"
 
   OMARCHY_BOX_CIDATA_IMAGE="${out_img}"
   OMARCHY_BOX_CIDATA_FORMAT="raw"
