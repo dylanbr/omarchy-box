@@ -71,11 +71,17 @@ build_qemu_cmd() {
     -device virtio-net-pci,netdev=n0
     -object rng-random,filename=/dev/urandom,id=rng0
     -device virtio-rng-pci,rng=rng0
-    -device virtio-vga
     -device qemu-xhci
     -device usb-tablet
     -device usb-kbd
   )
+
+  # virtio-vga is x86-only; aarch64 QEMU exposes virtio-gpu-pci instead.
+  if [[ "${OMARCHY_BOX_GUEST_ARCH}" == "x86_64" ]]; then
+    cmd+=(-device virtio-vga)
+  else
+    cmd+=(-device virtio-gpu-pci)
+  fi
 
   if [[ -n "${iso}" ]]; then
     cmd+=(
