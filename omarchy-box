@@ -7,30 +7,31 @@ script_dir=$(dirname "$(realpath "$0")")
 
 OMARCHY_BOX_BASE_DIR="${OMARCHY_BOX_BASE_DIR:-${script_dir}}"
 OMARCHY_BOX_DATA_DIR="${OMARCHY_BOX_DATA_DIR:-${OMARCHY_BOX_BASE_DIR}/data}"
+
+# Defaults (CLI flags may override before libs that depend on them).
 OMARCHY_BOX_INSTANCE="${OMARCHY_BOX_INSTANCE:-default}"
-OMARCHY_BOX_INSTANCE_DIR="${OMARCHY_BOX_INSTANCE_DIR:-${OMARCHY_BOX_DATA_DIR}/instances/${OMARCHY_BOX_INSTANCE}}"
-
-# Disk used to boot the instance (overlay or installed disk). Set by actions.
-OMARCHY_BOX_IMAGE="${OMARCHY_BOX_IMAGE:-${OMARCHY_BOX_INSTANCE_DIR}/disk.qcow2}"
-
 OMARCHY_BOX_CPUS="${OMARCHY_BOX_CPUS:-4}"
 OMARCHY_BOX_RAM="${OMARCHY_BOX_RAM:-8192}"
-
 OMARCHY_BOX_SSH_PORT="${OMARCHY_BOX_SSH_PORT:-2222}"
 OMARCHY_BOX_SSH_USER="${OMARCHY_BOX_SSH_USER:-omarchy}"
 OMARCHY_BOX_SSH_PASS="${OMARCHY_BOX_SSH_PASS:-omarchy}"
 OMARCHY_BOX_SSH_HOST="${OMARCHY_BOX_SSH_HOST:-127.0.0.1}"
 OMARCHY_BOX_SSH_KEY="${OMARCHY_BOX_SSH_KEY:-}"
 OMARCHY_BOX_SSH_TIMEOUT_SECS="${OMARCHY_BOX_SSH_TIMEOUT_SECS:-300}"
-
-# gui | none
 OMARCHY_BOX_DISPLAY="${OMARCHY_BOX_DISPLAY:-gui}"
-
-# Omarchy 4.0+ only.
 OMARCHY_BOX_VERSION="${OMARCHY_BOX_VERSION:-latest}"
-
-# auto | qcow | iso
 OMARCHY_BOX_MEDIA="${OMARCHY_BOX_MEDIA:-auto}"
+OMARCHY_BOX_HOSTNAME="${OMARCHY_BOX_HOSTNAME:-omarchy}"
+OMARCHY_BOX_KB_LAYOUT="${OMARCHY_BOX_KB_LAYOUT:-us}"
+OMARCHY_BOX_TIMEZONE="${OMARCHY_BOX_TIMEZONE:-UTC}"
+OMARCHY_BOX_DISK_GB="${OMARCHY_BOX_DISK_GB:-40}"
+
+source "${OMARCHY_BOX_BASE_DIR}/lib/cli.sh"
+omarchy_box_parse_args "$@"
+
+# Derived paths after --instance is known.
+OMARCHY_BOX_INSTANCE_DIR="${OMARCHY_BOX_INSTANCE_DIR:-${OMARCHY_BOX_DATA_DIR}/instances/${OMARCHY_BOX_INSTANCE}}"
+OMARCHY_BOX_IMAGE="${OMARCHY_BOX_IMAGE:-${OMARCHY_BOX_INSTANCE_DIR}/disk.qcow2}"
 
 source "${OMARCHY_BOX_BASE_DIR}/lib/arch.sh"
 source "${OMARCHY_BOX_BASE_DIR}/lib/dependency_check.sh"
@@ -57,7 +58,7 @@ run_action() {
   source "${command}"
 }
 
-run_action "${1:-usage}"
+run_action "${OMARCHY_BOX_ACTION}"
 
 if box_running; then
   echo "The box is left running until you press Ctrl+C to stop it."

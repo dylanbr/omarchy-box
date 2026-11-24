@@ -13,14 +13,14 @@ Guest architecture matches the host by default:
 - Intel Mac / x86_64 Linux → x86_64 guest (official qcow2 happy path)
 - Apple Silicon / aarch64 Linux → aarch64 guest (official ISO install; no official aarch64 qcow yet)
 
-Cross-arch emulation is opt-in and slow (`OMARCHY_BOX_ALLOW_EMULATION=true`).
+Cross-arch emulation is opt-in and slow (`--allow-emulation`).
 
 Dependencies:
 - `qemu` (`qemu-system-x86_64` and/or `qemu-system-aarch64`, plus `qemu-img`)
 - UEFI firmware (bundled with Homebrew `qemu`; on Linux install `ovmf` / `qemu-efi-aarch64`)
 - `curl`, `ssh`, `scp`
 
-ISO installs only (aarch64 happy path, or `build` / `OMARCHY_BOX_MEDIA=iso`):
+ISO installs only (aarch64 happy path, or `build` / `--media iso`):
 - `openssl` (to hash the user password)
 - a way to build cidata (`hdiutil` on macOS — already present; on Linux `dosfstools`+`mtools`, or `xorriso`/`genisoimage`)
 
@@ -42,29 +42,33 @@ cd omarchy-box
 ```
 
 On first run this downloads the latest stable Omarchy media and boots a desktop VM:
-- **x86_64:** official qcow2 (fast)
+- **x86_64:** official qcow2 when available (fast)
 - **aarch64:** unattended ISO install via cidata (slower first run)
 
 ```bash
-./omarchy-box download   # fetch media only
-./omarchy-box build      # force ISO install into the instance disk
-./omarchy-box clean      # reset the current instance
+./omarchy-box start --version 4.0.6 --media iso
+./omarchy-box build --version 4.5.0 --hostname lab --keyboard us
+./omarchy-box download --version latest
+./omarchy-box list
+./omarchy-box clean
 ```
 
 Login defaults to user/password `omarchy` / `omarchy`. SSH uses a per-instance key under `data/instances/<name>/`.
 
-### Environment Variables
+### Common options
 
-- `OMARCHY_BOX_CPUS` — vCPUs (default: 4)
-- `OMARCHY_BOX_RAM` — RAM in MB (default: 8192)
-- `OMARCHY_BOX_SSH_PORT` — host SSH forward port (default: 2222)
-- `OMARCHY_BOX_INSTANCE` — instance name (default: `default`)
-- `OMARCHY_BOX_GUEST_ARCH` — `x86_64` or `aarch64` (default: host arch)
-- `OMARCHY_BOX_MEDIA` — `auto`, `qcow`, or `iso` (default: `auto`)
-- `OMARCHY_BOX_DISPLAY` — `gui` or `none` (default: `gui`)
-- `OMARCHY_BOX_DISK_GB` — disk size for ISO installs (default: 40)
-- `OMARCHY_BOX_SSH_KEY` — private key for guest SSH
-- `OMARCHY_BOX_SSH_USER` / `OMARCHY_BOX_SSH_PASS` — defaults `omarchy` / `omarchy`
+| Option | Purpose |
+|---|---|
+| `--version latest\|4.x.y` | Omarchy release (4.0+ only) |
+| `--media auto\|qcow\|iso` | Prefer qcow, force ISO, or auto |
+| `--instance NAME` | Named instance directory |
+| `--cpus N` / `--memory MB` | VM size |
+| `--user` / `--password` / `--ssh-key` | Guest auth (ISO path for user/password) |
+| `--hostname` / `--keyboard` / `--timezone` | ISO install defaults |
+| `--disk-size GB` | ISO install disk size |
+| `--force` | Recreate an existing instance |
+
+Equivalent `OMARCHY_BOX_*` environment variables are also supported.
 
 ## License
 
