@@ -176,18 +176,58 @@ choose_media_kind() {
   fi
 }
 
+# Resolve an expected SHA256 for url/dest: use $sha if given, else sibling .sha256.
+resolve_expected_sha() {
+  local url="$1"
+  local dest="$2"
+  local sha="${3:-}"
+  local expected
+
+  if [[ -n "${sha}" ]]; then
+    echo "${sha}"
+    return 0
+  fi
+
+  if curl -fsSL "${url}.sha256" -o "${dest}.sha256" 2>/dev/null; then
+    expected="$(awk '{print $1; exit}' "${dest}.sha256")"
+    if [[ -n "${expected}" ]]; then
+      echo "${expected}"
+      return 0
+    fi
+  fi
+
+  return 1
+}
+
+verify_file_sha() {
+  local file="$1"
+  local expected="$2"
+  local actual
+
+  actual="$(sha256sum "${file}" | awk '{print $1}')"
+  if [[ "${actual}" != "${expected}" ]]; then
+    echo "Checksum mismatch for $(basename "${file}")" >&2
+    echo "Expected: ${expected}" >&2
+    echo "Actual:   ${actual}" >&2
+    return 1
+  fi
+}
+
 download_file() {
   local url="$1"
   local dest="$2"
   local sha="${3:-}"
+  local partial="${dest}.partial"
+  local expected=""
 
   mkdir -p "$(dirname "${dest}")"
 
+  # Prefer verifying against a known digest when available.
+  expected="$(resolve_expected_sha "${url}" "${dest}" "${sha}" 2>/dev/null || true)"
+
   if [[ -f "${dest}" ]]; then
-    if [[ -n "${sha}" ]]; then
-      local actual
-      actual="$(sha256sum "${dest}" | awk '{print $1}')"
-      if [[ "${actual}" == "${sha}" ]]; then
+    if [[ -n "${expected}" ]]; then
+      if verify_file_sha "${dest}" "${expected}"; then
         echo "Using cached $(basename "${dest}")"
         return 0
       fi
@@ -200,29 +240,29 @@ download_file() {
 
   echo "Downloading ${url}"
   echo "This may take a while (multi-GB)…"
-  curl -fL --progress-bar -o "${dest}.partial" "${url}"
-  mv "${dest}.partial" "${dest}"
+  rm -f "${partial}"
+  if ! curl -fL --progress-bar -o "${partial}" "${url}"; then
+    rm -f "${partial}"
+    echo "Download failed: ${url}" >&2
+    return 1
+  fi
 
-  if [[ -n "${sha}" ]]; then
-    local actual
-    actual="$(sha256sum "${dest}" | awk '{print $1}')"
-    if [[ "${actual}" != "${sha}" ]]; then
-      echo "Checksum mismatch for ${dest}" >&2
-      echo "Expected: ${sha}" >&2
-      echo "Actual:   ${actual}" >&2
-      rm -f "${dest}"
+  # Refresh digest after download in case it was unavailable earlier.
+  if [[ -z "${expected}" ]]; then
+    expected="$(resolve_expected_sha "${url}" "${dest}" "${sha}" 2>/dev/null || true)"
+  fi
+
+  if [[ -n "${expected}" ]]; then
+    if ! verify_file_sha "${partial}" "${expected}"; then
+      rm -f "${partial}"
       return 1
     fi
   else
-    if curl -fsSL "${url}.sha256" -o "${dest}.sha256" 2>/dev/null; then
-      (
-        cd "$(dirname "${dest}")"
-        sha256sum -c "$(basename "${dest}.sha256")"
-      ) || return 1
-    else
-      echo "WARNING: no checksum available for $(basename "${dest}"); skipping verify." >&2
-    fi
+    echo "WARNING: no checksum available for $(basename "${dest}"); skipping verify." >&2
   fi
+
+  # Only promote into the cache after a successful download (+ verify when possible).
+  mv "${partial}" "${dest}"
 }
 
 download_resolved_media() {
