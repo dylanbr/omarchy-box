@@ -2,6 +2,7 @@
 
 # SSH helpers for Omarchy Box.
 # Prefer key-based auth. Password auth via sshpass is optional fallback only.
+# Compatible with macOS bash 3.2 (no namerefs).
 
 ensure_instance_ssh_key() {
   OMARCHY_BOX_SSH_KEY="${OMARCHY_BOX_SSH_KEY:-${OMARCHY_BOX_INSTANCE_DIR}/id_ed25519}"
@@ -39,6 +40,7 @@ _ssh_base_opts() {
 _build_ssh_cmd() {
   local -a cmd=()
   local -a base=()
+  local arg
   while IFS= read -r -d '' arg; do
     base+=("${arg}")
   done < <(_ssh_base_opts)
@@ -57,6 +59,7 @@ _build_ssh_cmd() {
 _build_scp_cmd() {
   local -a cmd=()
   local -a base=()
+  local arg
   while IFS= read -r -d '' arg; do
     base+=("${arg}")
   done < <(_ssh_base_opts)
@@ -72,31 +75,38 @@ _build_scp_cmd() {
   printf '%s\0' "${cmd[@]}"
 }
 
-_read_null_array() {
-  local -n _out=$1
-  _out=()
-  while IFS= read -r -d '' arg; do
-    _out+=("${arg}")
-  done
+_shell_quote() {
+  # bash 3.2-safe single-quote escaping for remote bash -lc
+  local s=$1
+  printf "'%s'" "${s//\'/\'\\\'\'}"
 }
 
 run_in_box() {
   local -a cmd=()
-  _read_null_array cmd < <(_build_ssh_cmd)
-  "${cmd[@]}" "bash -lc $(printf '%q' "$*")"
+  local arg
+  while IFS= read -r -d '' arg; do
+    cmd+=("${arg}")
+  done < <(_build_ssh_cmd)
+  "${cmd[@]}" "bash -lc $(_shell_quote "$*")"
 }
 
 copy_to_box() {
   local src="$1" dest="$2"
   local -a cmd=()
-  _read_null_array cmd < <(_build_scp_cmd)
+  local arg
+  while IFS= read -r -d '' arg; do
+    cmd+=("${arg}")
+  done < <(_build_scp_cmd)
   "${cmd[@]}" -r -- "${src}" "${OMARCHY_BOX_SSH_USER}@${OMARCHY_BOX_SSH_HOST}:${dest}"
 }
 
 copy_from_box() {
   local src="$1" dest="$2"
   local -a cmd=()
-  _read_null_array cmd < <(_build_scp_cmd)
+  local arg
+  while IFS= read -r -d '' arg; do
+    cmd+=("${arg}")
+  done < <(_build_scp_cmd)
   "${cmd[@]}" -r -- "${OMARCHY_BOX_SSH_USER}@${OMARCHY_BOX_SSH_HOST}:${src}" "${dest}"
 }
 

@@ -46,7 +46,10 @@ ensure_runtime_dependencies() {
   fi
 
   if [[ -n "${OMARCHY_BOX_SSH_PASS:-}" ]] && ! command -v sshpass >/dev/null 2>&1; then
-    echo "Note: sshpass is not installed; password SSH fallback is unavailable." >&2
-    echo "Key-based auth (OMARCHY_BOX_SSH_KEY) is preferred." >&2
+    if [[ "${OMARCHY_BOX_SSHPASS_WARNED:-}" != "true" ]]; then
+      echo "Note: sshpass is not installed; password SSH fallback is unavailable." >&2
+      echo "Key-based auth (OMARCHY_BOX_SSH_KEY) is preferred." >&2
+      OMARCHY_BOX_SSHPASS_WARNED=true
+    fi
   fi
 }

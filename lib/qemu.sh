@@ -6,25 +6,26 @@
 QEMU_PID=""
 PIDFILE="${OMARCHY_BOX_INSTANCE_DIR:-.}/.qemu.pid"
 
-_append_accel() {
-  local -n _cmd=$1
+# Sets QEMU_ACCEL_ARGS for the current host (bash 3.2 compatible; no namerefs).
+_set_accel_args() {
+  QEMU_ACCEL_ARGS=()
 
   if [[ "${OMARCHY_BOX_NATIVE_VIRT}" != "true" ]]; then
-    _cmd+=(-accel tcg,thread=multi)
+    QEMU_ACCEL_ARGS+=(-accel tcg,thread=multi)
     return
   fi
 
   case "${OMARCHY_BOX_HOST_OS}" in
     Linux)
       if [[ -r /dev/kvm && -w /dev/kvm ]]; then
-        _cmd+=(-accel kvm)
+        QEMU_ACCEL_ARGS+=(-accel kvm)
       else
         echo "WARNING: /dev/kvm not usable; falling back to TCG." >&2
-        _cmd+=(-accel tcg,thread=multi)
+        QEMU_ACCEL_ARGS+=(-accel tcg,thread=multi)
       fi
       ;;
     Darwin)
-      _cmd+=(-accel hvf)
+      QEMU_ACCEL_ARGS+=(-accel hvf)
       ;;
   esac
 }
@@ -48,7 +49,10 @@ build_qemu_cmd() {
     cmd+=(-machine virt,gic-version=max)
   fi
 
-  _append_accel cmd
+  _set_accel_args
+  if [[ ${#QEMU_ACCEL_ARGS[@]} -gt 0 ]]; then
+    cmd+=("${QEMU_ACCEL_ARGS[@]}")
+  fi
 
   if [[ "${OMARCHY_BOX_NATIVE_VIRT}" == "true" ]]; then
     cmd+=(-cpu host)
