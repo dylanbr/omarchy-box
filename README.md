@@ -71,9 +71,11 @@ Login defaults to user/password `omarchy` / `omarchy`. SSH uses a per-instance k
 | `--display gui\|none` | GUI (default) or headless; raw QEMU `-display` values also work |
 | `--resolution WxH` | Guest framebuffer / EDID mode (default: `1920x1080`) |
 
-GUI mode enables **zoom-to-fit** by default so the window is resizable and splash/desktop content scales into it: Cocoa on macOS (Intel and Apple Silicon), GTK on Linux when that backend is available (x86_64 and aarch64). Set `OMARCHY_BOX_ZOOM_TO_FIT=off` to turn it off. Guest GPU is still arch-specific (`virtio-vga` on x86_64, `virtio-gpu-pci` on aarch64).
+GUI uses Cocoa on macOS and GTK on Linux when available. Guest GPU is arch-specific (`virtio-vga` on x86_64, `virtio-gpu-pci` on aarch64). The window tracks the guest framebuffer (default 1920×1080 via `--resolution`).
 
-On Retina Macs, QEMU 11 maps one guest pixel to one physical pixel, so a 1920×1080 guest is roughly a 960×540 point window. Use a larger `--resolution` (e.g. `2560x1440`), drag-resize with zoom-to-fit, or **View → Enter Full Screen**. Linux and non-Retina displays get a normal-sized 1920×1080 window.
+**Zoom-to-fit is off by default.** With virtio-gpu, zoom-to-fit can feed the host window size back into the guest and shrink the desktop (e.g. to 640×360). After the guest is at the preferred mode you can still use **View → Zoom To Fit** / **Full Screen**, or set `OMARCHY_BOX_ZOOM_TO_FIT=on`.
+
+On Retina Macs, QEMU 11 maps one guest pixel to one physical pixel, so 1920×1080 is roughly a 960×540 point window — use `--resolution 2560x1440` or Full Screen if you want it larger. Linux and non-Retina hosts get a normal-sized 1920×1080 window.
 
 ISO first-boot installs can blank the display for a long time while the guest installs; SSH answering is the signal that it finished.
 

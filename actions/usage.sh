@@ -47,12 +47,12 @@ Notes:
   - auto media: qcow2 on x86_64 when published for that version; otherwise ISO.
   - Official qcow2 is typically only available for the current stable latest.
   - Multiple instances can run together; SSH ports are allocated automatically.
-  - GUI zoom-to-fit is on by default (Cocoa on macOS; GTK on Linux when built-in).
-    Set OMARCHY_BOX_ZOOM_TO_FIT=off to disable. Resize via the window edges, or
-    View → Zoom To Fit / Full Screen in the QEMU menu on macOS.
-  - Guest framebuffer defaults to 1920x1080 (override with --resolution). On Retina
-    Macs QEMU maps 1 guest pixel to 1 physical pixel, so the window is about half
-    the point size of the guest mode — raise --resolution or use Full Screen.
+  - Guest framebuffer defaults to 1920x1080 (override with --resolution). Window
+    size follows that mode. On Retina Macs QEMU maps 1 guest pixel to 1 physical
+    pixel (~half the point size) — raise --resolution or use View → Full Screen.
+  - Zoom-to-fit is off by default: turning it on can make virtio-gpu shrink the
+    guest to the window (e.g. 640x360). Opt in with OMARCHY_BOX_ZOOM_TO_FIT=on
+    or View → Zoom To Fit after the desktop is at the preferred mode.
   - ISO installs can blank the display for long stretches while waiting for SSH.
 
 EOF

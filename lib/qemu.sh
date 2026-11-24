@@ -37,13 +37,15 @@ _qemu_has_display() {
 }
 
 # Sets QEMU_DISPLAY_ARGS for GUI mode.
-# macOS (Intel + Apple Silicon): Cocoa with zoom-to-fit so the window is
-# resizable and guest splash/desktop scales into it (helps Retina HiDPI).
-# Linux (x86_64 + aarch64): GTK zoom-to-fit when available; else SDL; else
-# leave QEMU's default. Guest GPU stays arch-specific (virtio-vga / virtio-gpu).
+# Zoom-to-fit is OFF by default: with virtio-gpu, enabling it makes the host
+# report the (often tiny) window size back to the guest, which then modesets
+# down (we saw 640x360) and ignores xres/yres. Window size then follows the
+# guest framebuffer (EDID preferred mode). Opt in with OMARCHY_BOX_ZOOM_TO_FIT=on
+# or View → Zoom To Fit. Full Screen still works from the QEMU menu.
+# macOS: Cocoa. Linux: GTK when available, else SDL, else QEMU default.
 _set_gui_display_args() {
   QEMU_DISPLAY_ARGS=()
-  local zoom="${OMARCHY_BOX_ZOOM_TO_FIT:-on}"
+  local zoom="${OMARCHY_BOX_ZOOM_TO_FIT:-off}"
   local zoom_opt=""
 
   case "${zoom}" in
@@ -51,7 +53,7 @@ _set_gui_display_args() {
     off|false|0|no) zoom_opt="" ;;
     *)
       echo "WARNING: ignoring invalid OMARCHY_BOX_ZOOM_TO_FIT=${zoom} (use on|off)." >&2
-      zoom_opt=",zoom-to-fit=on"
+      zoom_opt=""
       ;;
   esac
 
