@@ -17,6 +17,7 @@ installed_version() {
 mark_instance_ready() {
   printf '%s\n' "${OMARCHY_BOX_RESOLVED_VERSION:-unknown}" > "${OMARCHY_BOX_INSTANCE_DIR}/.ready"
   printf '%s\n' "${OMARCHY_BOX_MEDIA_KIND:-unknown}" > "${OMARCHY_BOX_INSTANCE_DIR}/.media"
+  printf '%s\n' "${OMARCHY_BOX_GUEST_ARCH}" > "${OMARCHY_BOX_INSTANCE_DIR}/.arch"
 }
 
 prepare_qcow_instance() {
@@ -40,6 +41,7 @@ prepare_iso_instance() {
   prepare_firmware_vars "${vars}"
 
   ensure_instance_ssh_key
+  allocate_ssh_port
   echo "Building unattended install (cidata) image…"
   build_cidata_image "${cidata}" "${OMARCHY_BOX_SSH_PUBKEY}"
   cidata="${OMARCHY_BOX_CIDATA_IMAGE}"
@@ -100,10 +102,18 @@ ensure_instance_matches_request() {
 boot_instance() {
   local vars="${OMARCHY_BOX_INSTANCE_DIR}/efivars.fd"
   local smbios=""
+  local disk="${OMARCHY_BOX_IMAGE}"
 
   ensure_runtime_dependencies
   ensure_instance_ssh_key
   ensure_instance_matches_request
+  refresh_pidfile_path
+
+  if instance_process_running; then
+    echo "Instance '${OMARCHY_BOX_INSTANCE}' is already running (PID $(instance_pid))." >&2
+    print_instance_status
+    return 1
+  fi
 
   if [[ ! -f "${OMARCHY_BOX_IMAGE}" ]]; then
     prepare_instance
@@ -112,16 +122,27 @@ boot_instance() {
     prepare_instance
   fi
 
+  allocate_ssh_port
+
+  if [[ "${OMARCHY_BOX_EPHEMERAL}" == "true" ]]; then
+    echo "Ephemeral mode: changes will be discarded on stop."
+    disk="$(prepare_ephemeral_disk "${OMARCHY_BOX_IMAGE}")"
+  fi
+
   if [[ -f "${OMARCHY_BOX_INSTANCE_DIR}/.media" ]] && [[ "$(tr -d '[:space:]' < "${OMARCHY_BOX_INSTANCE_DIR}/.media")" == "qcow" ]]; then
     smbios="$(omarchy_box_smbios_ssh_credential "${OMARCHY_BOX_SSH_PUBKEY}")"
   fi
 
-  start_box "${OMARCHY_BOX_IMAGE}" "${vars}" "" "" "raw" "${smbios}"
+  start_box "${disk}" "${vars}" "" "" "raw" "${smbios}"
 
+  echo "Instance: ${OMARCHY_BOX_INSTANCE}"
   echo "Desktop login: ${OMARCHY_BOX_SSH_USER} / ${OMARCHY_BOX_SSH_PASS}"
   echo "SSH: ssh -i ${OMARCHY_BOX_SSH_KEY} -p ${OMARCHY_BOX_SSH_PORT} ${OMARCHY_BOX_SSH_USER}@${OMARCHY_BOX_SSH_HOST}"
   if [[ -f "${OMARCHY_BOX_INSTANCE_DIR}/.ready" ]]; then
     echo "Installed version: $(installed_version)"
+  fi
+  if [[ "${OMARCHY_BOX_EPHEMERAL}" == "true" ]]; then
+    echo "Mode: ephemeral"
   fi
 
   if wait_for_ssh; then

@@ -9,11 +9,11 @@ Build and run [Omarchy](https://omarchy.org/) in a virtual machine to try the de
 
 Omarchy Box supports **macOS and Linux**. Windows is not supported yet.
 
-Guest architecture matches the host by default:
-- Intel Mac / x86_64 Linux → x86_64 guest (official qcow2 happy path)
-- Apple Silicon / aarch64 Linux → aarch64 guest (official ISO install; no official aarch64 qcow yet)
-
-Cross-arch emulation is opt-in and slow (`--allow-emulation`).
+| Host | Guest (default) | Happy path |
+|---|---|---|
+| Intel Mac / x86_64 Linux | x86_64 | Official qcow2 (fast) |
+| Apple Silicon / aarch64 Linux | aarch64 | Official ISO install first, then persistent disk |
+| Cross-arch | opt-in | `--allow-emulation` (TCG, slow) |
 
 Dependencies:
 - `qemu` (`qemu-system-x86_64` and/or `qemu-system-aarch64`, plus `qemu-img`)
@@ -41,19 +41,20 @@ cd omarchy-box
 ./omarchy-box start
 ```
 
-On first run this downloads the latest stable Omarchy media and boots a desktop VM:
-- **x86_64:** official qcow2 when available (fast)
-- **aarch64:** unattended ISO install via cidata (slower first run)
+On first run this downloads the latest stable Omarchy media and boots a desktop VM.
 
 ```bash
-./omarchy-box start --version 4.0.6 --media iso
-./omarchy-box build --version 4.5.0 --hostname lab --keyboard us
-./omarchy-box download --version latest
+./omarchy-box start --instance lab --version 4.5.0
+./omarchy-box start --instance try --ephemeral
+./omarchy-box status --instance lab
+./omarchy-box stop --instance lab
+./omarchy-box stop --all
 ./omarchy-box list
-./omarchy-box clean
+./omarchy-box build --version 4.0.6 --media iso --hostname lab
+./omarchy-box clean --instance lab
 ```
 
-Login defaults to user/password `omarchy` / `omarchy`. SSH uses a per-instance key under `data/instances/<name>/`.
+Login defaults to user/password `omarchy` / `omarchy`. SSH uses a per-instance key under `data/instances/<name>/`. SSH ports default to `2222` and auto-increment when that port is busy so multiple instances can run together.
 
 ### Common options
 
@@ -63,10 +64,10 @@ Login defaults to user/password `omarchy` / `omarchy`. SSH uses a per-instance k
 | `--media auto\|qcow\|iso` | Prefer qcow, force ISO, or auto |
 | `--instance NAME` | Named instance directory |
 | `--cpus N` / `--memory MB` | VM size |
-| `--user` / `--password` / `--ssh-key` | Guest auth (ISO path for user/password) |
-| `--hostname` / `--keyboard` / `--timezone` | ISO install defaults |
-| `--disk-size GB` | ISO install disk size |
+| `--ssh-port PORT` | Fixed host SSH port (otherwise auto) |
+| `--ephemeral` | Discard disk writes when the VM stops |
 | `--force` | Recreate an existing instance |
+| `--all` | Apply to every instance (`stop` / `status` / `clean`) |
 
 Equivalent `OMARCHY_BOX_*` environment variables are also supported.
 

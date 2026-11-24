@@ -10,13 +10,25 @@ if [[ -d "${OMARCHY_BOX_DATA_DIR}/instances" ]]; then
     name="$(basename "${dir}")"
     version="(not installed)"
     media="-"
+    port="-"
+    state="stopped"
     [[ -f "${dir}/.ready" ]] && version="$(tr -d '[:space:]' < "${dir}/.ready")"
     [[ -f "${dir}/.media" ]] && media="$(tr -d '[:space:]' < "${dir}/.media")"
+    [[ -f "${dir}/.ssh_port" ]] && port="$(tr -d '[:space:]' < "${dir}/.ssh_port")"
+    if [[ -f "${dir}/.qemu.pid" ]]; then
+      pid="$(tr -d '[:space:]' < "${dir}/.qemu.pid")"
+      if [[ -n "${pid}" ]] && kill -0 "${pid}" 2>/dev/null; then
+        state="running"
+      else
+        state="stale"
+      fi
+    fi
     disk="-"
     if [[ -f "${dir}/disk.qcow2" ]]; then
       disk="$(du -h "${dir}/disk.qcow2" 2>/dev/null | awk '{print $1}')"
     fi
-    printf '  %-16s version=%-10s media=%-6s disk=%s\n' "${name}" "${version}" "${media}" "${disk}"
+    printf '  %-16s state=%-8s version=%-10s media=%-6s ssh=%-5s disk=%s\n' \
+      "${name}" "${state}" "${version}" "${media}" "${port}" "${disk}"
   done
   shopt -u nullglob
 fi

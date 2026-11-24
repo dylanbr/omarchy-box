@@ -11,7 +11,7 @@ omarchy_box_parse_args() {
 
   while [[ $# -gt 0 ]]; do
     case "$1" in
-      start|build|download|clean|list|help|usage)
+      start|build|download|clean|list|stop|status|help|usage)
         if [[ -n "${OMARCHY_BOX_ACTION}" ]]; then
           echo "Unexpected extra command: $1" >&2
           exit 1
@@ -55,10 +55,12 @@ omarchy_box_parse_args() {
         ;;
       --ssh-port)
         OMARCHY_BOX_SSH_PORT="${2:-}"
+        OMARCHY_BOX_SSH_PORT_EXPLICIT=true
         shift 2
         ;;
       --ssh-port=*)
         OMARCHY_BOX_SSH_PORT="${1#*=}"
+        OMARCHY_BOX_SSH_PORT_EXPLICIT=true
         shift
         ;;
       --instance|--name)
@@ -143,6 +145,14 @@ omarchy_box_parse_args() {
         ;;
       --force)
         OMARCHY_BOX_FORCE=true
+        shift
+        ;;
+      --ephemeral)
+        OMARCHY_BOX_EPHEMERAL=true
+        shift
+        ;;
+      --all)
+        OMARCHY_BOX_ALL=true
         shift
         ;;
       --allow-emulation)

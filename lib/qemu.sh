@@ -119,7 +119,9 @@ start_box() {
     return 1
   fi
 
-  echo "Starting Omarchy box (${OMARCHY_BOX_GUEST_ARCH}, ${OMARCHY_BOX_CPUS} CPUs, ${OMARCHY_BOX_RAM} MB)…"
+  PIDFILE="${OMARCHY_BOX_INSTANCE_DIR:-.}/.qemu.pid"
+
+  echo "Starting Omarchy box (${OMARCHY_BOX_GUEST_ARCH}, ${OMARCHY_BOX_CPUS} CPUs, ${OMARCHY_BOX_RAM} MB, ssh :${OMARCHY_BOX_SSH_PORT})…"
 
   local -a cmd=()
   while IFS= read -r -d '' arg; do
@@ -129,6 +131,9 @@ start_box() {
   "${cmd[@]}" &
   QEMU_PID=$!
   echo "${QEMU_PID}" > "${PIDFILE}"
+  if declare -F write_instance_runtime_metadata >/dev/null; then
+    write_instance_runtime_metadata
+  fi
 
   trap 'shutdown_box $?' EXIT INT TERM
 }
@@ -177,5 +182,8 @@ shutdown_box() {
   local ec="${1:-$?}"
   shutdown_box_soft || shutdown_box_hard
   rm -f "${PIDFILE}"
+  if declare -F cleanup_ephemeral_disk >/dev/null; then
+    cleanup_ephemeral_disk
+  fi
   exit "${ec}"
 }

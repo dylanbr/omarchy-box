@@ -25,6 +25,9 @@ OMARCHY_BOX_HOSTNAME="${OMARCHY_BOX_HOSTNAME:-omarchy}"
 OMARCHY_BOX_KB_LAYOUT="${OMARCHY_BOX_KB_LAYOUT:-us}"
 OMARCHY_BOX_TIMEZONE="${OMARCHY_BOX_TIMEZONE:-UTC}"
 OMARCHY_BOX_DISK_GB="${OMARCHY_BOX_DISK_GB:-40}"
+OMARCHY_BOX_EPHEMERAL="${OMARCHY_BOX_EPHEMERAL:-false}"
+OMARCHY_BOX_ALL="${OMARCHY_BOX_ALL:-false}"
+OMARCHY_BOX_SSH_PORT_EXPLICIT="${OMARCHY_BOX_SSH_PORT_EXPLICIT:-false}"
 
 source "${OMARCHY_BOX_BASE_DIR}/lib/cli.sh"
 omarchy_box_parse_args "$@"
@@ -38,9 +41,12 @@ source "${OMARCHY_BOX_BASE_DIR}/lib/dependency_check.sh"
 source "${OMARCHY_BOX_BASE_DIR}/lib/firmware.sh"
 source "${OMARCHY_BOX_BASE_DIR}/lib/ssh.sh"
 source "${OMARCHY_BOX_BASE_DIR}/lib/qemu.sh"
+source "${OMARCHY_BOX_BASE_DIR}/lib/lifecycle.sh"
 source "${OMARCHY_BOX_BASE_DIR}/lib/media.sh"
 source "${OMARCHY_BOX_BASE_DIR}/lib/cidata.sh"
 source "${OMARCHY_BOX_BASE_DIR}/lib/instance.sh"
+
+refresh_pidfile_path
 
 mkdir -p "${OMARCHY_BOX_DATA_DIR}" "${OMARCHY_BOX_INSTANCE_DIR}"
 cd "${OMARCHY_BOX_DATA_DIR}"
