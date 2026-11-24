@@ -32,8 +32,10 @@ _append_accel() {
 build_qemu_cmd() {
   local disk="$1"
   local firmware_vars="$2"
-  shift 2
-  local extra_drives=("$@")
+  local iso="${3:-}"
+  local cidata="${4:-}"
+  local cidata_format="${5:-raw}"
+  local smbios_b64="${6:-}"
 
   resolve_firmware
   prepare_firmware_vars "${firmware_vars}"
@@ -59,7 +61,8 @@ build_qemu_cmd() {
     -m "${OMARCHY_BOX_RAM}"
     -drive "if=pflash,format=raw,readonly=on,file=${OMARCHY_BOX_FIRMWARE_CODE}"
     -drive "if=pflash,format=raw,file=${OMARCHY_BOX_FIRMWARE_VARS}"
-    -drive "if=virtio,file=${disk},format=qcow2,cache=none,discard=unmap"
+    -drive "if=none,file=${disk},format=qcow2,cache=none,discard=unmap,id=disk0"
+    -device virtio-blk-pci,drive=disk0,bootindex=1
     -netdev "user,id=n0,hostfwd=tcp::${OMARCHY_BOX_SSH_PORT}-:22"
     -device virtio-net-pci,netdev=n0
     -object rng-random,filename=/dev/urandom,id=rng0
@@ -67,12 +70,34 @@ build_qemu_cmd() {
     -device virtio-vga
     -device qemu-xhci
     -device usb-tablet
+    -device usb-kbd
   )
 
-  local drive
-  for drive in "${extra_drives[@]}"; do
-    [[ -n "${drive}" ]] && cmd+=(-drive "${drive}")
-  done
+  if [[ -n "${iso}" ]]; then
+    cmd+=(
+      -device virtio-scsi-pci,id=scsi0
+      -drive "if=none,file=${iso},format=raw,media=cdrom,readonly=on,id=cd0"
+      -device scsi-cd,drive=cd0,bootindex=2
+    )
+  fi
+
+  if [[ -n "${cidata}" ]]; then
+    if [[ "${cidata_format}" == "iso" ]]; then
+      cmd+=(
+        -drive "if=none,file=${cidata},format=raw,media=cdrom,readonly=on,id=cidata"
+        -device scsi-cd,drive=cidata
+      )
+    else
+      cmd+=(
+        -drive "if=none,file=${cidata},format=raw,id=cidata"
+        -device usb-storage,drive=cidata
+      )
+    fi
+  fi
+
+  if [[ -n "${smbios_b64}" ]]; then
+    cmd+=(-smbios "type=11,value=io.systemd.credential.binary:tmpfiles.extra=${smbios_b64}")
+  fi
 
   if [[ "${OMARCHY_BOX_DISPLAY:-gui}" == "none" ]]; then
     cmd+=(-display none -serial mon:stdio)
@@ -84,8 +109,10 @@ build_qemu_cmd() {
 start_box() {
   local disk="${1:-${OMARCHY_BOX_IMAGE}}"
   local firmware_vars="${2:-${OMARCHY_BOX_INSTANCE_DIR:-.}/efivars.fd}"
-  shift $(( $# >= 2 ? 2 : $# )) 2>/dev/null || true
-  local extra_drives=("$@")
+  local iso="${3:-}"
+  local cidata="${4:-}"
+  local cidata_format="${5:-raw}"
+  local smbios_b64="${6:-}"
 
   if [[ -z "${disk}" || ! -f "${disk}" ]]; then
     echo "Disk image not found: ${disk:-"(unset)"}" >&2
@@ -97,7 +124,7 @@ start_box() {
   local -a cmd=()
   while IFS= read -r -d '' arg; do
     cmd+=("${arg}")
-  done < <(build_qemu_cmd "${disk}" "${firmware_vars}" "${extra_drives[@]}")
+  done < <(build_qemu_cmd "${disk}" "${firmware_vars}" "${iso}" "${cidata}" "${cidata_format}" "${smbios_b64}")
 
   "${cmd[@]}" &
   QEMU_PID=$!

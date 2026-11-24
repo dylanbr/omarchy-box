@@ -4,9 +4,9 @@ cat <<EOF
 Usage: $0 <command>
 
 Primary Commands:
-  start      Start an Omarchy desktop VM
-  build      Install Omarchy from an ISO into a disk
-  download   Download Omarchy media
+  start      Download (if needed) and start an Omarchy desktop VM
+  build      Install Omarchy from an ISO into the instance disk
+  download   Download Omarchy media for this host/guest arch
 
 Other Commands:
   clean      Erase instance/data and start fresh
@@ -18,23 +18,20 @@ Environment (common):
   OMARCHY_BOX_SSH_PORT      Host SSH port (default: 2222)
   OMARCHY_BOX_INSTANCE      Instance name (default: default)
   OMARCHY_BOX_GUEST_ARCH    x86_64 | aarch64 (default: host arch)
-  OMARCHY_BOX_VERSION       latest | 4.x.y
-  OMARCHY_BOX_MEDIA         auto | qcow | iso
+  OMARCHY_BOX_MEDIA         auto | qcow | iso (default: auto)
   OMARCHY_BOX_DISPLAY       gui | none (default: gui)
-  OMARCHY_BOX_SSH_KEY       Private key for guest SSH (preferred)
+  OMARCHY_BOX_SSH_KEY       Private key for guest SSH (auto-generated if unset)
+  OMARCHY_BOX_DISK_GB       Install disk size for ISO installs (default: 40)
   OMARCHY_BOX_ALLOW_EMULATION=true
                             Allow slow cross-arch TCG (not recommended)
 
 Notes:
   - Omarchy 4.0+ only (no online installer, no bare mode).
-  - Happy path prefers official qcow2 on x86_64; aarch64 uses ISO install.
+  - auto media: qcow2 on x86_64 when published; ISO install on aarch64.
   - macOS and Linux hosts are supported.
-  - start, build, and download are temporarily unavailable during the rewrite.
 
 EOF
 
-# usage is shown for missing/unknown commands → non-zero.
-# help.sh sources this then exits 0.
 if [[ "${OMARCHY_BOX_USAGE_OK:-}" != "true" ]]; then
   exit 1
 fi
